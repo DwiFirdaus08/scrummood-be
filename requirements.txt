@@ -1,0 +1,9 @@
+Flask
+Flask-SQLAlchemy
+Flask-Migrate
+Flask-JWT-Extended
+Flask-CORS
+Flask-SocketIO
+PyMySQL
+python-dotenv
+google-generativeai
