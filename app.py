@@ -27,7 +27,7 @@ def create_app(config_class=Config):
     CORS(
         app,
         supports_credentials=True,
-        origins=["http://localhost:8088", "http://localhost:3000"],
+        origins=["http://localhost:8088", "http://localhost:3000", "https://xeroon.xyz"],
         allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     )
