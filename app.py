@@ -23,7 +23,14 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    CORS(app)
+    # Perbaiki CORS agar mengizinkan frontend di 8088 dan 3000, serta semua method dan header
+    CORS(
+        app,
+        supports_credentials=True,
+        origins=["http://localhost:8088", "http://localhost:3000"],
+        allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    )
     socketio.init_app(app, cors_allowed_origins="*")
     
     # Configure logging
@@ -36,11 +43,13 @@ def create_app(config_class=Config):
     from modules.suggestion_engine import suggestion_bp
     from modules.chat_handler import chat_bp
     from modules.reflection import reflection_bp
+    from modules.session_scheduler.routes import session_scheduler_bp
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(emotion_bp, url_prefix='/api/emotions')
     app.register_blueprint(suggestion_bp, url_prefix='/api/suggestions')
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
     app.register_blueprint(reflection_bp, url_prefix='/api/reflections')
+    app.register_blueprint(session_scheduler_bp, url_prefix='/api/sessions')
     
     # Health check endpoint
     @app.route('/api/health')
