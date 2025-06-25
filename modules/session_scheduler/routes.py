@@ -44,7 +44,7 @@ def create_session():
         'scheduled_duration': session.scheduled_duration
     }}), 201
 
-@session_scheduler_bp.route('/sessions/today', methods=['GET', 'OPTIONS'])
+@session_scheduler_bp.route('/today', methods=['GET', 'OPTIONS'])
 def get_today_sessions():
     if request.method == 'OPTIONS':
         return make_response('', 200)
