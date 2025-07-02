@@ -1,6 +1,7 @@
 from models import db
 from datetime import datetime
 from enum import Enum
+from uuid import uuid4
 
 class SessionStatus(Enum):
     SCHEDULED = "scheduled"
@@ -13,7 +14,7 @@ class Session(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
-    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)
     facilitator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     # Timing
@@ -36,6 +37,9 @@ class Session(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
+    # Unique join token for the session
+    join_token = db.Column(db.String(64), unique=True, nullable=False, default=lambda: str(uuid4()))
+    
     # Relationships
     participants = db.relationship('SessionParticipant', backref='session', lazy='dynamic')
     emotions = db.relationship('EmotionData', backref='session', lazy='dynamic')
@@ -51,15 +55,16 @@ class Session(db.Model):
             'scheduled_start': self.scheduled_start.isoformat(),
             'scheduled_duration': self.scheduled_duration,
             'status': self.status.value,
-            'description': self.description,
-            'created_at': self.created_at.isoformat()
+            'description': self.description if self.description is not None else '',
+            'created_at': self.created_at.isoformat(),
+            'join_token': self.join_token  # Ensure join_token is always included
         }
         
         if include_details:
             data.update({
-                'actual_start': self.actual_start.isoformat() if self.actual_start else None,
-                'actual_end': self.actual_end.isoformat() if self.actual_end else None,
-                'agenda': self.agenda,
+                'actual_start': self.actual_start.isoformat() if self.actual_start else '',
+                'actual_end': self.actual_end.isoformat() if self.actual_end else '',
+                'agenda': self.agenda if self.agenda is not None else [],
                 'emotion_tracking_enabled': self.emotion_tracking_enabled,
                 'auto_suggestions_enabled': self.auto_suggestions_enabled,
                 'recording_enabled': self.recording_enabled,
