@@ -18,10 +18,10 @@ class Session(db.Model):
     facilitator_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     # Timing
-    scheduled_start = db.Column(db.DateTime, nullable=False)
+    scheduled_start = db.Column(db.DateTime(timezone=True), nullable=False)
     scheduled_duration = db.Column(db.Integer, default=15)  # minutes
-    actual_start = db.Column(db.DateTime)
-    actual_end = db.Column(db.DateTime)
+    actual_start = db.Column(db.DateTime(timezone=True))
+    actual_end = db.Column(db.DateTime(timezone=True))
     
     # Status and metadata
     status = db.Column(db.Enum(SessionStatus), default=SessionStatus.SCHEDULED)
@@ -34,7 +34,7 @@ class Session(db.Model):
     recording_enabled = db.Column(db.Boolean, default=False)
     
     # Metadata
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime(timezone=True), default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     
     # Unique join token for the session
