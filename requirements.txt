@@ -9,3 +9,4 @@ python-dotenv
 google-generativeai
 python-dateutil
 eventlet
+gunicorn
