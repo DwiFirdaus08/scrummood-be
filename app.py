@@ -8,12 +8,13 @@ from config import Config
 import logging
 from datetime import datetime
 from dotenv import load_dotenv
+import eventlet
 
 # Initialize extensions
 db = SQLAlchemy()
 migrate = Migrate()
 jwt = JWTManager()
-socketio = SocketIO()
+socketio = SocketIO(async_mode="eventlet")
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -65,4 +66,6 @@ def create_app(config_class=Config):
 if __name__ == '__main__':
     load_dotenv()
     app = create_app()
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    import eventlet
+    eventlet.monkey_patch()
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
