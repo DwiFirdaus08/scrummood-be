@@ -8,3 +8,4 @@ PyMySQL
 python-dotenv
 google-generativeai
 python-dateutil
+eventlet
