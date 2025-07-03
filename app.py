@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -8,7 +11,6 @@ from config import Config
 import logging
 from datetime import datetime
 from dotenv import load_dotenv
-import eventlet
 import os
 
 # Initialize extensions
@@ -67,6 +69,4 @@ def create_app(config_class=Config):
 if __name__ == '__main__':
     load_dotenv()
     app = create_app()
-    import eventlet
-    eventlet.monkey_patch()
     socketio.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
