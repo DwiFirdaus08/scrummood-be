@@ -122,3 +122,67 @@ def handle_leave_session(data):
         emit('leave_session_response', {'status': 'left', 'session_id': session_id})
     except Exception as e:
         emit('error', {'message': f'Failed to leave session: {str(e)}'})
+@socketio.on('send_chat_message')
+def handle_chat_message(data):
+    """Menerima, menganalisis, menyimpan, dan menyiarkan pesan chat."""
+    try:
+        user_id = getattr(request, 'sid_user_id', None)
+        if not user_id:
+            emit('error', {'message': 'Autentikasi diperlukan'})
+            return
+
+        session_id = data.get('session_id')
+        content = data.get('content')
+
+        if not all([session_id, content]):
+            emit('error', {'message': 'Session ID dan isi pesan diperlukan'})
+            return
+
+        # --- INTI LOGIKA AI DIMULAI DI SINI ---
+        # 1. Analisis emosi dari teks chat
+        analysis_result = emotion_analyzer.analyze_text(content)
+        detected_emotion = 'neutral'
+        sentiment_score = 0.0
+        if analysis_result:
+            detected_emotion = analysis_result.get('emotion', 'neutral')
+            sentiment_score = analysis_result.get('sentiment_score', 0.0)
+        # --- LOGIKA AI SELESAI ---
+
+        # 2. Dapatkan info sesi untuk timestamp
+        session = Session.query.get(session_id)
+        session_timestamp = None
+        if session and session.actual_start:
+            delta = datetime.utcnow() - session.actual_start
+            session_timestamp = int(delta.total_seconds())
+
+        # 3. Buat dan simpan record ChatMessage ke database
+        chat_message = ChatMessage(
+            session_id=session_id,
+            sender_id=user_id,
+            content=content,
+            message_type=MessageType.TEXT,
+            emotion_detected=detected_emotion,
+            sentiment_score=sentiment_score,
+            session_timestamp=session_timestamp
+        )
+        db.session.add(chat_message)
+        db.session.commit()
+
+        # 4. Siapkan data untuk dikirim kembali ke semua klien
+        user = User.query.get(user_id)
+        message_to_broadcast = {
+            'id': chat_message.id,
+            'content': chat_message.content,
+            'sender_id': user.id,
+            'sender_name': user.full_name,
+            'timestamp': chat_message.timestamp.isoformat(),
+            'emotion': chat_message.emotion_detected # Kirim emosi ke frontend!
+        }
+
+        # 5. Siarkan pesan baru ke semua orang di room sesi
+        emit('new_chat_message', message_to_broadcast, room=f'session_{session_id}')
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error handling chat message: {str(e)}") # Ganti dengan logger di produksi
+        emit('error', {'message': 'Gagal memproses pesan chat'})
