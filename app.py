@@ -13,7 +13,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 import os
 
-# Initialize extensions
+# Pindahkan inisialisasi ekstensi ke sini, tanpa app
 db = SQLAlchemy()
 migrate = Migrate()
 jwt = JWTManager()
@@ -22,12 +22,11 @@ socketio = SocketIO(async_mode="eventlet")
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-    
-    # Initialize extensions with app
+
+    # Inisialisasi ekstensi dengan app di sini
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
-    # Perbaiki CORS agar mengizinkan frontend di 8088 dan 3000, serta semua method dan header
     CORS(
         app,
         supports_credentials=True,
@@ -36,25 +35,29 @@ def create_app(config_class=Config):
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     )
     socketio.init_app(app, cors_allowed_origins=["http://localhost:8088", "http://localhost:3000", "https://xeroon.xyz"])
-    
+
     # Configure logging
     if not app.debug:
         logging.basicConfig(level=logging.INFO)
-    
-    # Register blueprints
-    from modules.auth import auth_bp
-    from modules.emotion_monitor import emotion_bp
-    from modules.suggestion_engine import suggestion_bp
-    from modules.chat_handler import chat_bp
-    from modules.reflection import reflection_bp
-    from modules.session_scheduler.routes import session_scheduler_bp
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
-    app.register_blueprint(emotion_bp, url_prefix='/api/emotions')
-    app.register_blueprint(suggestion_bp, url_prefix='/api/suggestions')
-    app.register_blueprint(chat_bp, url_prefix='/api/chat')
-    app.register_blueprint(reflection_bp, url_prefix='/api/reflections')
-    app.register_blueprint(session_scheduler_bp, url_prefix='/api/sessions')
-    
+
+    # Pindahkan impor blueprint ke dalam fungsi create_app
+    # Ini adalah kunci untuk memutus siklus impor
+    with app.app_context():
+        from modules.auth import auth_bp
+        from modules.emotion_monitor import emotion_bp
+        from modules.suggestion_engine import suggestion_bp
+        from modules.chat_handler import chat_bp
+        from modules.reflection import reflection_bp
+        from modules.session_scheduler.routes import session_scheduler_bp
+
+        # Register blueprints
+        app.register_blueprint(auth_bp, url_prefix='/api/auth')
+        app.register_blueprint(emotion_bp, url_prefix='/api/emotions')
+        app.register_blueprint(suggestion_bp, url_prefix='/api/suggestions')
+        app.register_blueprint(chat_bp, url_prefix='/api/chat')
+        app.register_blueprint(reflection_bp, url_prefix='/api/reflections')
+        app.register_blueprint(session_scheduler_bp, url_prefix='/api/sessions')
+
     # Health check endpoint
     @app.route('/api/health')
     def health_check():
@@ -63,7 +66,7 @@ def create_app(config_class=Config):
             'timestamp': datetime.utcnow().isoformat(),
             'version': '1.0.0'
         }
-    
+
     return app
 
 # Expose app and socketio for python app.py (eventlet)
