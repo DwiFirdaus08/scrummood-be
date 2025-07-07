@@ -2,28 +2,21 @@ import eventlet
 eventlet.monkey_patch()
 
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_jwt_extended import JWTManager
 from flask_cors import CORS
-from flask_socketio import SocketIO
 from config import Config
 import logging
 from datetime import datetime
 from dotenv import load_dotenv
 import os
 
-# Pindahkan inisialisasi ekstensi ke sini, tanpa app
-db = SQLAlchemy()
-migrate = Migrate()
-jwt = JWTManager()
-socketio = SocketIO(async_mode="eventlet")
+# 1. Impor ekstensi dari file extensions.py
+from extensions import db, migrate, jwt, socketio
 
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
-
-    # Inisialisasi ekstensi dengan app di sini
+    
+    # 2. Inisialisasi ekstensi dengan aplikasi
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
@@ -35,29 +28,26 @@ def create_app(config_class=Config):
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     )
     socketio.init_app(app, cors_allowed_origins=["http://localhost:8088", "http://localhost:3000", "https://xeroon.xyz"])
-
+    
     # Configure logging
     if not app.debug:
         logging.basicConfig(level=logging.INFO)
-
-    # Pindahkan impor blueprint ke dalam fungsi create_app
-    # Ini adalah kunci untuk memutus siklus impor
-    with app.app_context():
-        from modules.auth import auth_bp
-        from modules.emotion_monitor import emotion_bp
-        from modules.suggestion_engine import suggestion_bp
-        from modules.chat_handler import chat_bp
-        from modules.reflection import reflection_bp
-        from modules.session_scheduler.routes import session_scheduler_bp
-
-        # Register blueprints
-        app.register_blueprint(auth_bp, url_prefix='/api/auth')
-        app.register_blueprint(emotion_bp, url_prefix='/api/emotions')
-        app.register_blueprint(suggestion_bp, url_prefix='/api/suggestions')
-        app.register_blueprint(chat_bp, url_prefix='/api/chat')
-        app.register_blueprint(reflection_bp, url_prefix='/api/reflections')
-        app.register_blueprint(session_scheduler_bp, url_prefix='/api/sessions')
-
+    
+    # 3. Impor dan daftarkan blueprint di sini
+    from modules.auth import auth_bp
+    from modules.emotion_monitor import emotion_bp
+    from modules.suggestion_engine import suggestion_bp
+    from modules.chat_handler import chat_bp
+    from modules.reflection import reflection_bp
+    from modules.session_scheduler.routes import session_scheduler_bp
+    
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(emotion_bp, url_prefix='/api/emotions')
+    app.register_blueprint(suggestion_bp, url_prefix='/api/suggestions')
+    app.register_blueprint(chat_bp, url_prefix='/api/chat')
+    app.register_blueprint(reflection_bp, url_prefix='/api/reflections')
+    app.register_blueprint(session_scheduler_bp, url_prefix='/api/sessions')
+    
     # Health check endpoint
     @app.route('/api/health')
     def health_check():
@@ -66,10 +56,10 @@ def create_app(config_class=Config):
             'timestamp': datetime.utcnow().isoformat(),
             'version': '1.0.0'
         }
-
+    
     return app
 
-# Expose app and socketio for python app.py (eventlet)
+# Buat instance aplikasi untuk digunakan oleh server seperti Gunicorn
 app = create_app()
 
 if __name__ == '__main__':
