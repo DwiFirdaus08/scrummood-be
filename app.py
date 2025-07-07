@@ -23,11 +23,11 @@ def create_app(config_class=Config):
     CORS(
         app,
         supports_credentials=True,
-        origins=["http://localhost:8088", "http://localhost:3000", "https://xeroon.xyz"],
+        origins=["http://localhost:8088", "http://localhost:3000", "https://xeroon.xyz", "https://scrummood-fe.vercel.app"],
         allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     )
-    socketio.init_app(app, cors_allowed_origins=["http://localhost:8088", "http://localhost:3000", "https://xeroon.xyz"])
+    socketio.init_app(app, cors_allowed_origins=["http://localhost:8088", "http://localhost:3000", "https://xeroon.xyz", "https://scrummood-fe.vercel.app"])
     
     # Configure logging
     if not app.debug:
