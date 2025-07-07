@@ -4,7 +4,7 @@ from models.suggestion import AISuggestion, SuggestionType, SuggestionStatus
 from models.emotion import EmotionData
 from models.session import Session
 from models.user import User
-from app import db, socketio
+from extensions import db, socketio
 from . import suggestion_bp
 from .suggestion_generator import SuggestionGenerator
 from datetime import datetime, timedelta

@@ -3,7 +3,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.emotion import EmotionData, EmotionType, AnalysisSource
 from models.session import Session
 from models.user import User, UserRole
-from app import db, socketio
+from extensions import db, socketio
 from . import emotion_bp
 from .emotion_analyzer import EmotionAnalyzer
 from datetime import datetime

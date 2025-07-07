@@ -7,7 +7,7 @@ from datetime import datetime
 from models.emotion import *
 from models.session import Session
 from models.user import UserRole
-from app import db
+from extensions import db
 from flask import current_app
 import json
 

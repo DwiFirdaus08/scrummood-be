@@ -1,7 +1,7 @@
 from flask import request, jsonify, current_app
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity
 from models.user import User, Team, TeamMembership, UserRole
-from app import db
+from extensions import db
 from . import auth_bp
 from datetime import datetime
 import re

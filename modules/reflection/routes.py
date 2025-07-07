@@ -4,7 +4,7 @@ from models.emotion import EmotionData
 from models.session import Session, SessionParticipant
 from models.user import User
 from models.journal import Journal
-from app import db
+from extensions import db
 from . import reflection_bp
 from modules.suggestion_engine.suggestion_generator import SuggestionGenerator
 from datetime import datetime, timedelta

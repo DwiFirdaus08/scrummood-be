@@ -4,8 +4,7 @@ from models.session import Session
 from models.suggestion import *
 from datetime import datetime, timedelta
 import statistics
-from app import db
-
+from extensions import db
 class SuggestionGenerator:
     """
     AI-powered suggestion generator for ScrumMood
