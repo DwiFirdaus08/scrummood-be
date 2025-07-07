@@ -48,7 +48,11 @@ def create_session():
     )
     db.session.add(session)
     db.session.commit()
-    join_link = f"http://localhost:8088/join/{session.join_token}"
+    
+    # Mengambil URL frontend dari environment variable
+    frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000', 'http://localhost:8088').rstrip('/')
+    join_link = f"{frontend_url}/join/{session.join_token}"
+    
     return jsonify({'message': 'Session created', 'session': {
         'id': session.id,
         'title': session.title,
