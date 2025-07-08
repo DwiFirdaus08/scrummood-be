@@ -3,9 +3,9 @@ from models.user import User, UserRole
 from models.session import *
 from models.emotion import EmotionData
 from models.suggestion import AISuggestion
-from flask import Blueprint, request, jsonify, make_response
+from flask import Blueprint, request, jsonify, make_response, current_app, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone 
 from uuid import uuid4
 import requests
 import os
@@ -64,30 +64,45 @@ def create_session():
     }}), 201
 
 @session_scheduler_bp.route('/today', methods=['GET', 'OPTIONS'])
+@jwt_required() # Kita asumsikan endpoint ini selalu butuh login
 def get_today_sessions():
     if request.method == 'OPTIONS':
         return make_response('', 200)
-    from flask_jwt_extended import verify_jwt_in_request, get_jwt_identity
-    verify_jwt_in_request()
+
     user_id = get_jwt_identity()
-    # Ambil offset timezone dari query param (dalam menit), default 0 (UTC)
+
     try:
-        tz_offset = int(request.args.get('tz_offset', '0'))
-    except Exception:
-        tz_offset = 0
-    now_utc = datetime.utcnow()
-    # Hitung waktu lokal user
-    now_local = now_utc + timedelta(minutes=tz_offset)
-    start_local = datetime(now_local.year, now_local.month, now_local.day)
-    end_local = start_local + timedelta(days=1)
-    # Konversi kembali ke UTC untuk query DB
-    start_utc = start_local - timedelta(minutes=tz_offset)
-    end_utc = end_local - timedelta(minutes=tz_offset)
-    sessions = Session.query.filter(
-        Session.scheduled_start >= start_utc,
-        Session.scheduled_start < end_utc
-    ).order_by(Session.scheduled_start.asc()).all()
-    return jsonify({'sessions': [s.to_dict() for s in sessions]}), 200
+        # Coba ambil tz_offset, jika gagal atau tidak ada, gunakan 0 (UTC) sebagai default
+        try:
+            # Browser biasanya mengirim offset UTC-7 sebagai 420. Kita perlu membaliknya.
+            client_offset_minutes = int(request.args.get('tz_offset', '0'))
+        except (ValueError, TypeError):
+            client_offset_minutes = 0 # Default ke UTC jika data tidak valid
+
+        # Buat objek timezone berdasarkan offset dari klien
+        user_timezone = timezone(timedelta(minutes=-client_offset_minutes))
+
+        # Dapatkan waktu "sekarang" di zona waktu pengguna
+        now_local = datetime.now(user_timezone)
+
+        # Tentukan awal dan akhir hari ini di zona waktu tersebut
+        start_of_day_local = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_day_local = start_of_day_local + timedelta(days=1)
+
+        # Query ke database. SQLAlchemy akan handle konversi zona waktu
+        # dari 'aware' datetime ke UTC jika diperlukan oleh DB.
+        sessions = Session.query.filter(
+            Session.scheduled_start >= start_of_day_local,
+            Session.scheduled_start < end_of_day_local
+        ).order_by(Session.scheduled_start.asc()).all()
+
+        return jsonify({'sessions': [s.to_dict() for s in sessions]}), 200
+
+    except Exception as e:
+        # Ini akan mencatat error sebenarnya di log Railway untuk debugging
+        current_app.logger.error(f"Error di get_today_sessions: {str(e)}")
+        # Kirim respons error yang jelas ke frontend
+        return jsonify({'error': 'Terjadi kesalahan saat mengambil jadwal sesi.'}), 500
 
 @session_scheduler_bp.route('/join/<join_token>', methods=['GET'])
 @jwt_required()
