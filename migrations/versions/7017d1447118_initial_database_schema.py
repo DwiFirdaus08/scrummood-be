@@ -1,8 +1,8 @@
-"""empty message
+"""Initial database schema
 
-Revision ID: 276aa829415b
+Revision ID: 7017d1447118
 Revises: 
-Create Date: 2025-06-24 14:07:18.392736
+Create Date: 2025-07-08 10:36:36.125029
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '276aa829415b'
+revision = '7017d1447118'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -53,24 +53,26 @@ def upgrade():
     op.create_table('sessions',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('title', sa.String(length=200), nullable=False),
-    sa.Column('team_id', sa.Integer(), nullable=False),
+    sa.Column('team_id', sa.Integer(), nullable=True),
     sa.Column('facilitator_id', sa.Integer(), nullable=False),
-    sa.Column('scheduled_start', sa.DateTime(), nullable=False),
+    sa.Column('scheduled_start', sa.DateTime(timezone=True), nullable=False),
     sa.Column('scheduled_duration', sa.Integer(), nullable=True),
-    sa.Column('actual_start', sa.DateTime(), nullable=True),
-    sa.Column('actual_end', sa.DateTime(), nullable=True),
+    sa.Column('actual_start', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('actual_end', sa.DateTime(timezone=True), nullable=True),
     sa.Column('status', sa.Enum('SCHEDULED', 'ACTIVE', 'COMPLETED', 'CANCELLED', name='sessionstatus'), nullable=True),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('agenda', sa.JSON(), nullable=True),
     sa.Column('emotion_tracking_enabled', sa.Boolean(), nullable=True),
     sa.Column('auto_suggestions_enabled', sa.Boolean(), nullable=True),
     sa.Column('recording_enabled', sa.Boolean(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_by', sa.Integer(), nullable=False),
+    sa.Column('join_token', sa.String(length=64), nullable=False),
     sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['facilitator_id'], ['users.id'], ),
     sa.ForeignKeyConstraint(['team_id'], ['teams.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('join_token')
     )
     op.create_table('team_memberships',
     sa.Column('id', sa.Integer(), nullable=False),
